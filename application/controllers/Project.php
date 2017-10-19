@@ -32,8 +32,15 @@ class Project extends CI_Controller{
     */
     function index()
     {
+        $profile            = $this->session->userdata('profile');
         $data['title']      = "Listado de Proyectos";
-        $data['projects']   = $this->Project_model->get_all_projects();
+
+        if ($profile != 1) {
+            $user_id = $this->session->userdata('id_user');
+            $data['projects']   = $this->Project_model->get_all_projects($user_id);
+        }else{
+            $data['projects']   = $this->Project_model->get_all_projects();
+        }
 
         $this->load->model('Enterprise_model');
         

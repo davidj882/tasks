@@ -22,10 +22,17 @@ class Project_model extends CI_Model
     /*
      * Get all projects
      */
-    function get_all_projects()
+    function get_all_projects($user_id = null)
     {
-        $this->db->order_by('id_project', 'desc');
-        return $this->db->get('projects')->result_array();
+        if (is_null($user_id)) {
+            $this->db->order_by('id_project', 'desc');
+            return $this->db->get('projects')->result_array();
+        }else{
+            $this->db->order_by('id_project', 'desc');
+            $this->db->join('rel_project_user pu', 'p.id_project = pu.project_id');
+            $this->db->where('pu.user_id', $user_id);
+            return $this->db->get('projects p')->result_array();
+        }
     }
         
     /*

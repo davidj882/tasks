@@ -51,7 +51,6 @@ class Project extends CI_Controller{
 		$this->form_validation->set_rules('name','Nombre','required');
 		$this->form_validation->set_rules('ranges','Alcance','required');
 		$this->form_validation->set_rules('description','Descripción','required');
-		$this->form_validation->set_rules('limits','Limitaciones','required');
 		$this->form_validation->set_rules('specifications','Especificaciones','required');
 		$this->form_validation->set_rules('date_start','Fecha Inicial','required');
         $this->form_validation->set_rules('date_end','Fecha Inicial','required');
@@ -65,8 +64,7 @@ class Project extends CI_Controller{
 				'enterprise_id'     => $this->input->post('enterprise_id'),
 				'name'              => $this->input->post('name'),
 				'description'       => $this->input->post('description'),
-				'ranges'            => $this->input->post('ranges'),
-				'limits'            => $this->input->post('limits'),
+				'ranges'            => $this->input->post('ranges')
                 'specifications'    => $this->input->post('specifications'),
 				'date_created'      => date('Y-m-d H:i:s'),
             );

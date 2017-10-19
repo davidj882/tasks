@@ -81,7 +81,7 @@
 							<span class="text-danger"><?php echo form_error('specifications');?></span>
 						</div>
 					</div>
-					<div class="col-md-6">
+					<div class="col-md-12">
 						<label for="ranges" class="control-label">
 							<span class="text-danger">*</span> Alcances y Limitaciones
 						</label>

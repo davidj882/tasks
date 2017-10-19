@@ -95,21 +95,13 @@
 						</div>
 					</div>
 					<div class="col-md-6">
-						<label for="ranges" class="control-label"><span class="text-danger">*</span> Alcance</label>
+						<label for="ranges" class="control-label">
+							<span class="text-danger">*</span> Alcances y Limitaciones</label>
 						<div class="form-group">
 							<textarea name="ranges" id="ranges" class="form-control input-lg">
 								<?php echo $this->input->post('ranges'); ?>
 							</textarea>
 							<span class="text-danger"><?php echo form_error('ranges');?></span>
-						</div>
-					</div>
-					<div class="col-md-6">
-						<label for="limits" class="control-label"><span class="text-danger">*</span> Limitaciones</label>
-						<div class="form-group">
-							<textarea name="limits" id="limits" class="form-control input-lg">
-								<?php echo $this->input->post('limits'); ?>
-							</textarea>
-							<span class="text-danger"><?php echo form_error('limits');?></span>
 						</div>
 					</div>
 				</div>

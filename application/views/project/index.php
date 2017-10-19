@@ -38,6 +38,9 @@
                                 <td><?php echo $p['date_start']; ?></td>
                                 <td><?php echo $p['date_end']; ?></td>
                                 <td>
+                                    <a href="<?php echo site_url('make_pdf/project_data/'. $p['id_project']); ?>" class="btn btn-primary btn-sm">
+                                        <i class="fa fa-file-pdf-o"></i>
+                                    </a>
                                     <a href="#" class="btn btn-primary btn-sm tasks" data-id="<?php echo $p['id_project']; ?>" data-title="<?php echo $p['name']; ?>">
                                         <i class="fa fa-tasks"></i>
                                     </a>

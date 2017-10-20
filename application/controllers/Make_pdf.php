@@ -12,8 +12,17 @@ class Make_pdf extends CI_Controller {
 	    if (!$this->session->userdata('username')) {
 	        redirect('login');
 	    }
+	}
 
-	    /*
+	/**
+		* USE FPDF LIBRARY
+		* EASY, NOT FUNCTIONAL
+		* NOT USE HTML SOURCE
+		* USE IN CASE PLAIN TEXT
+	*/
+	public function project_data_core($project_id)
+	{
+		/*
 			* Se manda el pdf al navegador
 			*
 			* $this->pdf->Output(nombredelarchivo, destino);
@@ -23,21 +32,17 @@ class Make_pdf extends CI_Controller {
 			*
 		*/
 	    $this->load->library('Pdf');
-	}
 
-	public function project_data($project_id)
-	{
 		/*
 			* PROYECT DATA
 		*/
-
 			$this->load->model('Project_model');
 			$project_data = $this->Project_model->get_project($project_id);
 
 			$project_name 	= utf8_decode($project_data['name']);
-			$description 	= utf8_decode(strip_tags($project_data['description']));
-			$ranges_limits 	= utf8_decode(strip_tags($project_data['ranges']));
-			$specifications = utf8_decode(strip_tags($project_data['specifications']));
+			$description 	= utf8_decode($project_data['description']);
+			$ranges_limits 	= utf8_decode($project_data['ranges']);
+			$specifications = utf8_decode($project_data['specifications']);
 
 			$project_texts = array( 
 								array(
@@ -93,11 +98,100 @@ class Make_pdf extends CI_Controller {
 				$this->pdf->Ln(7);
 				$this->pdf->SetTextColor(53,54,56);
 				$this->pdf->SetFont('OpenSans', '', 9);
-				$this->pdf->MultiCell(0, 4, $value['text'], 0, 'J');
+				// $this->pdf->MultiCell(0, 4, $value['text'], 0, 'J');
+				$this->pdf->WriteHTML($value['text']);
 				$this->pdf->Ln(10);
 			}
 			
-			$this->pdf->Output($project_name.'.pdf', 'D');
+			$this->pdf->Output($project_name.'.pdf', 'I');
+	}
+
+	/**
+		* USE TCPDF LIBRARY
+		* NOT EASY, BUT FUNCTIONAL
+		* USE HTML SOURCE
+	*/
+	public function project_data($project_id)
+	{
+		/*
+			* PROYECT DATA
+		*/
+			$this->load->model('Project_model');
+			$project_data = $this->Project_model->get_project($project_id);
+
+			$project_name 	= $project_data['name'];
+			$description 	= $project_data['description'];
+			$ranges_limits 	= $project_data['ranges'];
+			$specifications = $project_data['specifications'];
+
+			$project_texts = array( 
+								array(
+									'id' => 'desc', 
+									'name' => 'Descripción', 
+									'text' => $description, 
+								),
+								array(
+									'id' => 'spc', 
+									'name' => 'Especificaciones', 
+									'text' => $specifications, 
+								),
+								array(
+									'id' => 'ranges', 
+									'name' => 'Alcances y limitaciones', 
+									'text' => $ranges_limits, 
+								)
+							);
+
+			$this->load->library('Pdf_tc');
+
+			// FONTS
+			$path_osB 	= APPPATH."/third_party/tcpdf/fonts_custome/OpenSans-Bold.ttf";
+	        $path_osI 	= APPPATH."/third_party/tcpdf/fonts_custome/OpenSans-Italic.ttf";
+	        $path_osR 	= APPPATH."/third_party/tcpdf/fonts_custome/OpenSans-Regular.ttf";
+	        $opensans_B = TCPDF_FONTS::addTTFfont($path_osB, 'TrueTypeUnicode', '', 96);
+	        $opensans_I = TCPDF_FONTS::addTTFfont($path_osI, 'TrueTypeUnicode', '', 96);
+	        $opensans_R = TCPDF_FONTS::addTTFfont($path_osR, 'TrueTypeUnicode', '', 96);
+
+			$this->pdf = new Pdf_tc('P', 'mm', 'Letter', true, 'UTF-8', false);
+			// MARGINS
+			$this->pdf->SetMargins(15, 55, 15, true);
+			// add a page
+			$this->pdf->AddPage();
+
+			// SET font
+			$this->pdf->SetTextColor(31,49,91);
+			$this->pdf->SetFont($opensans_B, '', 30, '', false);
+        	// Title --- Project Name - Report Title
+        	$this->pdf->Cell(0, 0, $project_name, 0, false, 'C', 0, '', 0, false, 'M', 'M');
+        	$this->pdf->Ln(15);
+
+			/*
+				* TEXT BUCLE
+			*/	
+			
+			foreach ($project_texts as $key => $value) {
+				$this->pdf->SetTextColor(49,155,87);
+				$this->pdf->SetFont($opensans_B, '', 16, '', false);
+				$this->pdf->Cell(0, 0, $value['name'], 0, 'J');
+				$this->pdf->Ln(10);
+				$this->pdf->SetTextColor(53,54,56);
+				$this->pdf->SetFont($opensans_R, '', 9, '', false);
+				// output the HTML content
+				$this->pdf->writeHTML($value['text'], true, false, true, true, '');
+				$this->pdf->Ln(15);
+			}
+
+			
+
+			// reset pointer to the last page
+			$this->pdf->lastPage();
+
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+			$file_name = $this->clean_string($project_name).'.pdf';
+
+			// test custom bullet points for list
+			$this->pdf->Output($file_name, 'D');
 	}
 
 	public function demo()
@@ -171,6 +265,65 @@ class Make_pdf extends CI_Controller {
 		 *
 		 */
 		$this->pdf->Output("Lista de alumnos.pdf", 'I');
+	}
+
+	public function clean_string($string)
+	{
+	 
+	    $string = trim($string);
+	 
+	    $string = str_replace(
+	        array('á', 'à', 'ä', 'â', 'ª', 'Á', 'À', 'Â', 'Ä'),
+	        array('a', 'a', 'a', 'a', 'a', 'A', 'A', 'A', 'A'),
+	        $string
+	    );
+	 
+	    $string = str_replace(
+	        array('é', 'è', 'ë', 'ê', 'É', 'È', 'Ê', 'Ë'),
+	        array('e', 'e', 'e', 'e', 'E', 'E', 'E', 'E'),
+	        $string
+	    );
+	 
+	    $string = str_replace(
+	        array('í', 'ì', 'ï', 'î', 'Í', 'Ì', 'Ï', 'Î'),
+	        array('i', 'i', 'i', 'i', 'I', 'I', 'I', 'I'),
+	        $string
+	    );
+	 
+	    $string = str_replace(
+	        array('ó', 'ò', 'ö', 'ô', 'Ó', 'Ò', 'Ö', 'Ô'),
+	        array('o', 'o', 'o', 'o', 'O', 'O', 'O', 'O'),
+	        $string
+	    );
+	 
+	    $string = str_replace(
+	        array('ú', 'ù', 'ü', 'û', 'Ú', 'Ù', 'Û', 'Ü'),
+	        array('u', 'u', 'u', 'u', 'U', 'U', 'U', 'U'),
+	        $string
+	    );
+	 
+	    $string = str_replace(
+	        array('ñ', 'Ñ', 'ç', 'Ç'),
+	        array('n', 'N', 'c', 'C',),
+	        $string
+	    );
+	 
+	    //Esta parte se encarga de eliminar cualquier caracter extraño
+	    $string = str_replace(
+	        array("\"", "¨", "º", "-", "~",
+	             "#", "@", "|", "!", '"',
+	             "·", "$", "%", "&", "/",
+	             "(", ")", "?", "'", "¡",
+	             "¿", "[", "^", "<code>", "]",
+	             "+", "}", "{", "¨", "´",
+	             ">", "< ", ";", ",", ":",
+	             ".", " "),
+	        '_',
+	        $string
+	    );
+	 
+	 
+	    return $string;
 	}
 }
 

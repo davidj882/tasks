@@ -49,7 +49,7 @@ class Notification_model extends CI_Model
     /*
      * function to update notification
      */
-    function update_notification($id_item,$type,$params)
+    function update_notification($id_item, $type, $params)
     {
         $this->db->where('id_item',$id_item);
         $this->db->where('type',$type);
@@ -62,12 +62,6 @@ class Notification_model extends CI_Model
     function delete_notification($id_notification)
     {
         return $this->db->delete('notifications',array('id_notification'=>$id_notification));
-    }
-
-
-    function task_progress($user_id)
-    {
-        # code...
     }
 
     /*

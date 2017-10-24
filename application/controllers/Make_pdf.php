@@ -177,7 +177,7 @@ class Make_pdf extends CI_Controller {
 				$this->pdf->SetTextColor(53,54,56);
 				$this->pdf->SetFont($opensans_R, '', 9, '', false);
 				// output the HTML content
-				$this->pdf->writeHTML($value['text'], true, false, true, true, '');
+				$this->pdf->writeHTML($value['text'], true, false, true, true, 'J');
 				$this->pdf->Ln(15);
 			}
 

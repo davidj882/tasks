@@ -55,7 +55,6 @@ class Task extends CI_Controller{
 		
 		if($this->form_validation->run())     
         {   
-
             $this->load->model('User_model');
             $user_data = $this->User_model->get_user($this->input->post('user_id'));
 
@@ -97,41 +96,7 @@ class Task extends CI_Controller{
             }
 
             // ADD NOTIFICATION
-            $this->load->model('Notification_model');
-
-            $params = array(
-                'user_id' =>  $this->input->post('user_id'),
-                'type' =>  'task',
-                'id_item' =>  $task_id,
-                'date_send' => date('Y-m-d H:i:s')
-            );
-
-            $notification_id = $this->Notification_model->add_notification($params);
-
-            // SEND MAIL
-            $email_to   = $user_data['email'];
-
-            if (!empty($email_to)) {
-                $config = Array(
-                    'mailtype'  => 'html', 
-                    'charset'   => 'iso-8859-1'
-                );
-                $this->load->library('email', $config);
-                $this->email->set_newline("\r\n");
-                $this->email->from('no-reply@cencade.mx', 'CENCADE - TASKS');
-                $this->email->to($email_to);
-                $this->email->subject('Nueva Tarea');
-
-                $this->email->set_mailtype("html");
-                
-                $path = anchor(site_url('task/view/'.$task_id), 'Ver Tarea', array('target' => '_blank'));
-
-                $body = '<p>Has sido asignado a una nueva tarea (<b>"'.$this->input->post('name').'"</b>)</p>'.'<p>Para ver los detalles da clic en el enlace de abajo.</p>'.'<h3>'.$path.'</h3>';
-
-                $this->email->message($body);
-
-                $this->email->send();
-            }
+            $this->send_notification($this->input->post('user_id'), $task_id, 'add');
             
             redirect('task/index');
         }
@@ -170,7 +135,6 @@ class Task extends CI_Controller{
 			$this->form_validation->set_rules('date_start','Fecha Inicio','required');
 			$this->form_validation->set_rules('date_end','Fecha Compromiso','required');
             $this->form_validation->set_rules('status_id','Estado','required');
-			$this->form_validation->set_rules('color','Color','required');
 		
 			if($this->form_validation->run())     
             {   
@@ -180,8 +144,7 @@ class Task extends CI_Controller{
 					'name' => $this->input->post('name'),
 					'date_start' => $this->input->post('date_start'),
 					'date_end' => $this->input->post('date_end'),
-					'description' => $this->input->post('description'),
-                    'color' => $this->input->post('color')
+					'description' => $this->input->post('description')
                 );
 
                 $this->Task_model->update_task($id_task, $params);
@@ -195,6 +158,11 @@ class Task extends CI_Controller{
                 );
                 
                 $project_user_id = $this->Rel_tasks_user_model->update_rel_task_user_by_user_task($id_task, $params);
+
+                // ADD NOTIFICATION
+                if ($this->input->post('status_id') == 1) {
+                    $this->send_notification($this->input->post('user_id'), $id_task, 'update');
+                }
 
                 redirect('task/index');
             }
@@ -281,7 +249,7 @@ class Task extends CI_Controller{
 
         $user_id = $this->session->userdata('id_user');
 
-        if (empty($notification['date_view']) && $user_id == $notification['user_id']) {
+        if ($notification['status'] == 0 && $user_id == $notification['user_id']) {
             $params = array(
                 'date_view' => date('Y-m-d H:i:s'), 
                 'status' => 1, 
@@ -383,5 +351,73 @@ class Task extends CI_Controller{
         $data['picture']    = (empty($user_data['picture']))? '' : $user_data['picture'];
         
         $this->load->view('task/tasks_user', $data);
+    }
+
+
+    // SEND NOTIFICATION
+    function send_notification($user_id, $task_id, $type)
+    {
+        $this->load->model('Task_model');
+        $task_data = $this->Task_model->get_task($task_id);
+
+        $this->load->model('Notification_model');
+
+        if ($type == 'add') {
+            $params = array(
+                'user_id' =>  $user_id,
+                'type' =>  'task',
+                'id_item' =>  $task_id,
+                'date_send' => date('Y-m-d H:i:s')
+            );
+
+            $notification_id = $this->Notification_model->add_notification($params);
+
+        }elseif ($type == 'update') {
+
+            $notify_data = $this->Notification_model->get_notification_by_item($task_id, 'task');
+
+            $total_send     = $notify_data['total_send'] + 1;
+            $last_modify    = date('Y-m-d H:i:s');
+
+            $params = array(
+                'total_send'    =>  $total_send,
+                'last_modify'   =>  $last_modify,
+                'status'        => 0
+            );
+
+            $notification_id = $this->Notification_model->update_notification($task_id, 'task', $params);
+        }
+
+
+        // SEND MAIL
+        $this->load->model('User_model');
+        $user_data = $this->User_model->get_user($user_id);
+        $email_to   = $user_data['email'];
+
+        if (!empty($email_to)) {
+            $config = Array(
+                'mailtype'  => 'html', 
+                'charset'   => 'iso-8859-1'
+            );
+            $this->load->library('email', $config);
+            $this->email->set_newline("\r\n");
+            $this->email->from('no-reply@cencade.mx', 'CENCADE - TASKS');
+            $this->email->to($email_to);
+            $this->email->subject('Nueva Tarea');
+
+            $this->email->set_mailtype("html");
+            
+            $path = anchor(site_url('task/view/'.$task_id), 'Ver Tarea', array('target' => '_blank'));
+
+            if ($type == 'add') {
+                $body = '<p>Has sido asignado a una nueva tarea (<b>"'.$task_data['name'].'"</b>)</p>'.'<p>Para ver los detalles da clic en el enlace de abajo.</p>'.'<h3>'.$path.'</h3>';
+            }elseif ($type == 'update') {
+                $body = '<p>Has sido reasignado a la tarea (<b>"'.$task_data['name'].'"</b>)</p>'.'<p>Para ver los detalles da clic en el enlace de abajo.</p>'.'<h3>'.$path.'</h3>';
+            }
+
+            $this->email->message($body);
+
+            $this->email->send();
+        }
     }
 }

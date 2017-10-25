@@ -65,6 +65,14 @@ class Notification_model extends CI_Model
     }
 
     /*
+     * function to delete notification by id_item and tasks or project
+     */
+    function delete_notification_item($id_task, $type)
+    {
+        return $this->db->delete('notifications',array('type' => $type, 'id_item' => $id_task));
+    }
+
+    /*
      * Get notification by id_notification
      */
     function get_notification_users($user_id)

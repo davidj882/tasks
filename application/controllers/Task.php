@@ -214,6 +214,10 @@ class Task extends CI_Controller{
                 $this->del_all_folder($folder_development);
             }
 
+            // DELETE NOTIFICATIONS
+            $this->load->model('Notification_model');
+            $this->Notification_model->delete_notification_item($id_task, 'task');
+
             redirect('task/index');
         }
         else
